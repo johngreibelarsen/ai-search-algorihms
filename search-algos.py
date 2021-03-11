@@ -47,3 +47,28 @@ def depthFirstSearch(problem):
 
     return extract_path(came_from, problem.getStartState(), goal_location)
 
+def breadthFirstSearch(problem):
+    """
+    Search the shallowest nodes in the search tree first.
+    """
+    from util import Queue
+
+    frontier = Queue()
+    frontier.push(problem.getStartState()) # tuple (X,Y)
+    came_from = dict()
+    came_from[problem.getStartState()] = None
+    goal_location = None
+
+    while not frontier.isEmpty():
+        current = frontier.pop()
+
+        if problem.isGoalState(current):
+            goal_location = current
+            break
+
+        for location, direction, _ in problem.getSuccessors(current):
+            if (location not in came_from):
+                frontier.push(location)
+                came_from[location] = (current, direction)
+
+    return extract_path(came_from, problem.getStartState(), goal_location)
