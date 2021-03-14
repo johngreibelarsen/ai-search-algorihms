@@ -120,7 +120,27 @@ def breadthFirstSearch_old(problem):
     return extract_path(came_from, problem.getStartState(), goal_location)
 
 
+def uniformCostSearch(problem):
+    """ Dijkstra’s Algorithm (or Uniform Cost Search). Search the node of least total cost first."""
+    actions = []
+    frontier = util.PriorityQueue()
+    frontier.push( (problem.getStartState(), actions), 0)
+    cost_so_far = {problem.getStartState(): 0}
 
+    while not frontier.isEmpty():
+        state, actions = frontier.pop()
+
+        if problem.isGoalState(state):
+            break
+
+        for location, direction, cost in problem.getSuccessors(state):
+            new_cost = cost_so_far[state] + cost
+            if (location not in cost_so_far) or (new_cost < cost_so_far[location]):
+                cost_so_far[location] = new_cost
+                priority = new_cost
+                frontier.push((location, actions + [direction]), priority)
+
+    return actions
 
 class PositionSearchProblem(search.SearchProblem):
     """
