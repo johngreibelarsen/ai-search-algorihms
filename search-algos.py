@@ -72,7 +72,28 @@ def depthFirstSearch_old(problem):
 
     return extract_path(came_from, problem.getStartState(), goal_location)
 
+
 def breadthFirstSearch(problem):
+    """Search the shallowest nodes in the search tree first."""
+    actions = []
+    frontier = util.Queue()
+    frontier.push( (problem.getStartState(), actions) )
+    visited = [problem.getStartState()]
+
+    while not frontier.isEmpty():
+        state, actions = frontier.pop()
+
+        if problem.isGoalState(state):
+            break
+
+        for location, direction, _ in problem.getSuccessors(state):
+            if location not in visited:
+                frontier.push( (location, actions + [direction]) )
+                visited.append( location )
+    return actions
+
+
+def breadthFirstSearch_old(problem):
     """
     Search the shallowest nodes in the search tree first.
     """
