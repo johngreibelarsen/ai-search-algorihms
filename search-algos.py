@@ -142,6 +142,30 @@ def uniformCostSearch(problem):
 
     return actions
 
+
+def aStarSearch(problem, heuristic=nullHeuristic):
+    """Search the node that has the lowest combined cost and heuristic first."""
+    actions = []
+    frontier = util.PriorityQueue()
+    frontier.push( (problem.getStartState(), actions), 0)
+    cost_so_far = {problem.getStartState(): 0}
+
+    while not frontier.isEmpty():
+        state, actions = frontier.pop()
+
+        if problem.isGoalState(state):
+            break
+
+        for location, direction, cost in problem.getSuccessors(state):
+            new_cost = cost_so_far[state] + cost
+            if (location not in cost_so_far) or (new_cost < cost_so_far[location]):
+                cost_so_far[location] = new_cost
+                priority = new_cost + heuristic(location, problem)
+                frontier.push((location, actions + [direction]), priority)
+
+    return actions
+
+
 class PositionSearchProblem(search.SearchProblem):
     """
     A search problem defines the state space, start state, goal test, successor
