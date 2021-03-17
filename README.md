@@ -10,3 +10,6 @@ algorithms in AI.
 - Graph Depth First Search
 - Dijkstra's Shortest Path Algorithm (uniform cost / Greedy best-firt
   search)
+- A*
+
+Plus a number of search problems and associated function heuristics 
