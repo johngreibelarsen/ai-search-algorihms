@@ -437,6 +437,180 @@ class CornersProblem(search.SearchProblem):
         dx = cx - gx
         dy = cy - gy
 
+        def foodHeuristic(state, problem):
+            """
+            Your heuristic for the FoodSearchProblem goes here.
+
+            This heuristic must be consistent to ensure correctness.  First, try to come
+            up with an admissible heuristic; almost all admissible heuristics will be
+            consistent as well.
+
+            If using A* ever finds a solution that is worse uniform cost search finds,
+            your heuristic is *not* consistent, and probably not admissible!  On the
+            other hand, inadmissible or inconsistent heuristics may find optimal
+            solutions, so be careful.
+
+            The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
+            (see game.py) of either True or False. You can call foodGrid.asList() to get
+            a list of food coordinates instead.
+
+            If you want access to info like walls, capsules, etc., you can query the
+            problem.  For example, problem.walls gives you a Grid of where the walls
+            are.
+
+            If you want to *store* information to be reused in other calls to the
+            heuristic, there is a dictionary called problem.heuristicInfo that you can
+            use. For example, if you only want to count the walls once and store that
+            value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
+            Subsequent calls to this heuristic can access
+            problem.heuristicInfo['wallCount']
+            """
+
+            class Tree():
+                def __init__(self, root):
+                    self.root = root
+                    self.children = []
+
+                def addNode(self, obj):
+                    self.children.append(obj)
+
+            class Node():
+                def __init__(self, position, distance, parents):
+                    self.position = position
+                    self.distance = distance
+                    self.parents = parents
+                    self.children = []
+
+                def getParents(self):
+                    return self.parents
+
+                def addNode(self, obj):
+                    self.children.append(obj)
+
+            def leafNodes(top_node):
+                leafs = []
+
+                def _get_leaf_nodes(node):
+                    if node is not None:
+                        if len(node.children) == 0:
+                            leafs.append(node)
+                        for n in node.children:
+                            _get_leaf_nodes(n)
+
+                _get_leaf_nodes(top_node)
+                return leafs
+
+            position, foodGrid = state
+            shortest_path_value = 0
+
+            cur_position = position
+            foodPointPositions = foodGrid.asList()
+
+            cur_node = Node(cur_position, 0, [])
+            tree_paths = Tree(cur_node)
+            tree_paths.addNode(cur_node)
+            node_stack = [cur_node]
+            # Are there any neighbours, if not defaultt to normal Manhaattan distance calculation
+            useNormalManhattan = True
+            neighbours = findNeighbours(cur_node.position, foodPointPositions, [])
+            if any(neighbours.values()) and len(foodPointPositions) < 20:
+                useNormalManhattan = False
+
+            if not useNormalManhattan:
+                while node_stack:
+                    # print(f"Node stack length: {len(node_stack)}")
+                    cur_node = node_stack.pop(0)
+                    # time.sleep(0.1)
+                    neighbours = findNeighbours(cur_node.position, foodPointPositions, cur_node.getParents())
+                    # if cur_node.position == (4,4): print(f"Possition: {cur_node.position}, Parents: {cur_node.getParents()}, Neighbours: {neighbours}")
+                    for next in neighbours.values():
+                        if next != None and next[0] not in cur_node.getParents():
+                            node = Node(next[0], cur_node.distance + next[1],
+                                        [cur_node.position] + cur_node.getParents())
+                            cur_node.addNode(node)
+                            node_stack.append(node)
+
+                leaf_nodes = leafNodes(tree_paths.root)
+                distances = [leaf.distance for leaf in leaf_nodes]
+                # print(f"Accumulated distance: {distances}")
+                return min(distances)
+
+            while foodPointPositions:
+                distance, foodPoint = min(
+                    [(util.manhattanDistance(cur_position, foodPoint), foodPoint) for foodPoint in foodPointPositions])
+                shortest_path_value += distance
+                cur_position = foodPoint
+                foodPointPositions.remove(foodPoint)
+            # print(f"shortest_path_value: {shortest_path_value}")
+            return shortest_path_value  # Default to trivial solution
+
+        def findNeighbours(cur_position, foodPointPositions, excludePositions):
+            neighbours = {'N': None, 'S': None, 'E': None, 'W': None}
+            newFoodPointPositions = list(set(foodPointPositions) - set(excludePositions))
+            distances = [(util.manhattanDistance(cur_position, foodPoint), foodPoint) for foodPoint in
+                         newFoodPointPositions]
+            distances.sort()
+            for distance, foodPoint in distances:
+                if all(neighbours.values()):
+                    # print(f"Exit early. All neighbours found: {distances}")
+                    break
+                dx = cur_position[0] - foodPoint[0]  # W<-(-)-x-(+)->E
+                dy = cur_position[1] - foodPoint[1]  # S<-(-)-y-(+)->N
+                if dx != 0 and dy != 0: continue  # Only care about sstreaight line neeighbours
+                if dx < 0:
+                    if not neighbours['E']: neighbours['E'] = (foodPoint, distance)
+                elif dx > 0:
+                    if not neighbours['W']: neighbours['W'] = (foodPoint, distance)
+                if dy < 0:
+                    if not neighbours['S']: neighbours['S'] = (foodPoint, distance)
+                elif dy > 0:
+                    if not neighbours['N']: neighbours['N'] = (foodPoint, distance)
+            return neighbours
+
+        def foodHeuristicMinManhattan(state, problem):
+            """
+            Your heuristic for the FoodSearchProblem goes here.
+
+            This heuristic must be consistent to ensure correctness.  First, try to come
+            up with an admissible heuristic; almost all admissible heuristics will be
+            consistent as well.
+
+            If using A* ever finds a solution that is worse uniform cost search finds,
+            your heuristic is *not* consistent, and probably not admissible!  On the
+            other hand, inadmissible or inconsistent heuristics may find optimal
+            solutions, so be careful.
+
+            The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
+            (see game.py) of either True or False. You can call foodGrid.asList() to get
+            a list of food coordinates instead.
+
+            If you want access to info like walls, capsules, etc., you can query the
+            problem.  For example, problem.walls gives you a Grid of where the walls
+            are.
+
+            If you want to *store* information to be reused in other calls to the
+            heuristic, there is a dictionary called problem.heuristicInfo that you can
+            use. For example, if you only want to count the walls once and store that
+            value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
+            Subsequent calls to this heuristic can access
+            problem.heuristicInfo['wallCount']
+            """
+            position, foodGrid = state
+
+            shortest_path_value = 0
+
+            cur_position = position
+            foodPointPositions = foodGrid.asList()
+            while foodPointPositions:
+                distance, foodPoint = min(
+                    [(util.manhattanDistance(cur_position, foodPoint), foodPoint) for foodPoint in foodPointPositions])
+                shortest_path_value += distance
+                cur_position = foodPoint
+                foodPointPositions.remove(foodPoint)
+
+            # print(f"shortest_path_value: {shortest_path_value}")
+            return shortest_path_value  # Default to trivial solution
+
         counter_x = abs(dx)
         counter_y = abs(dy)
 
