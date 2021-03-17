@@ -358,3 +358,110 @@ class CornersProblem(search.SearchProblem):
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
         return len(actions)
+
+    def cornersHeuristic(state, problem):
+        """
+        A heuristic for the CornersProblem defined.
+          state:   The current search state
+          problem: The CornersProblem instance for this layout.
+        This function should always return a number that is a lower bound on the
+        shortest path from the state to a goal of the problem; i.e.  it should be
+        admissible (as well as consistent).
+        """
+        corners = problem.corners  # These are the corner coordinates
+        walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
+
+        position = state[0]
+        corners_visited = state[1]
+        corners_remaining = set(corners) - set(corners_visited)
+
+        shortest_path_value = 0
+
+        cur_position = position
+        while corners_remaining:
+            distance, corner = min(
+                [(util.manhattanDistance(cur_position, corner), corner) for corner in corners_remaining])
+            shortest_path_value += distance
+            cur_position = corner
+            corners_remaining.remove(corner)
+
+        return shortest_path_value  # Default to trivial solution
+
+    # This heuristic is inconsistent :-(
+    def cornersHeuristicManhattanWallDensity(state, problem):
+        """
+        A heuristic for the CornersProblem that you defined.
+
+          state:   The current search state
+                   (a data structure you chose in your search problem)
+
+          problem: The CornersProblem instance for this layout.
+
+        This function should always return a number that is a lower bound on the
+        shortest path from the state to a goal of the problem; i.e.  it should be
+        admissible (as well as consistent).
+        """
+        print(f"State: {state}")
+        corners = problem.corners  # These are the corner coordinates
+        print(f"Corners: {corners}")
+        walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
+        # print(f"Walls: {walls[0][0]}")
+        position = state[0]
+        corners_visited = state[1]
+        corners_remaining = set(corners) - set(corners_visited)
+        if not corners_remaining:
+            return 0
+        print(f"Corners remaaining: {corners_remaining}")
+        # Manhattaan distances
+        distanceMap = {corner: abs(position[0] - corner[0]) + abs(position[1] - corner[1]) for corner in
+                       corners_remaining}
+        # Euclidean distances
+        # distances = [((position[0] - corner[0]) ** 2 + (position[1] - corner[1]) ** 2) ** 0.5 for corner in corners_remaining]
+        print(f"Distance Map: {distanceMap}")
+        print(f"Min distancce: {min(distanceMap.values())}")
+        densityMap = {corner: areaDensity(position, corner, 3, problem.walls) for corner in corners_remaining}
+        print(f"Density Map: {densityMap}")
+        density_weight = 3
+        calculatedResults = {corner: distanceMap[corner] + density_weight * distanceMap[corner] * densityMap[corner] for
+                             corner in densityMap}
+        print(f"Calculated Map: {calculatedResults}")
+        return min(calculatedResults.values())
+
+    def areaDensity(current, goal, maxGridSize=3, walls=None):
+        maxGridSize -= 1
+        cx = current[0]
+        cy = current[1]
+        gx = goal[0]
+        gy = goal[1]
+
+        dx = cx - gx
+        dy = cy - gy
+
+        counter_x = abs(dx)
+        counter_y = abs(dy)
+
+        if counter_x > maxGridSize: counter_x = maxGridSize
+        if counter_y > maxGridSize: counter_y = maxGridSize
+
+        coordinates = []
+        for x in range(counter_x, -1, -1):
+            for y in range(counter_y, -1, -1):
+                if dx > 0:
+                    if dy > 0:
+                        coordinates.append((cx - x, cy - y))
+                    else:
+                        coordinates.append((cx - x, cy + y))
+                else:
+                    if dy > 0:
+                        coordinates.append((cx + x, cy - y))
+                    else:
+                        coordinates.append((cx + x, cy + y))
+
+        if current in coordinates: coordinates.remove(current)
+        if goal in coordinates: coordinates.remove(goal)
+
+        wall_elements = [coordinate for coordinate in coordinates if walls[coordinate[0]][coordinate[1]]]
+
+        if len(coordinates) == 0: return 0
+        return len(wall_elements) / len(coordinates)
+
