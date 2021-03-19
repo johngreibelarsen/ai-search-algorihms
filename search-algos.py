@@ -692,3 +692,68 @@ def mazeDistance(point1, point2, gameState):
     prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
     path = search.bfs(prob)
     return (len(path), path)
+
+class ClosestDotSearchAgent(SearchAgent):
+    "Search for all food using a sequence of searches"
+
+    def registerInitialState(self, state):
+        start = timeit.default_timer()
+        self.actions = []
+        currentState = state
+        print(f"state TYPE {type(currentState)}")
+        print(f"state count {currentState.getFood().count()}")
+        while (currentState.getFood().count() > 0):
+            nextPathSegment = self.findPathToClosestDot(currentState)  # The missing piece
+            self.actions += nextPathSegment
+            for action in nextPathSegment:
+                legal = currentState.getLegalActions()
+                if action not in legal:
+                    t = (str(action), str(currentState))
+                    raise Exception('findPathToClosestDot returned an illegal move: %s!\n%s' % t)
+                currentState = currentState.generateSuccessor(0, action)
+                print(f"state count {currentState.getFood().count()}")
+        self.actionIndex = 0
+        print('Path found with cost %d.' % len(self.actions))
+        end = timeit.default_timer()
+        print(f"Time: {end - start}")
+
+    def findPathToClosestDot(self, gameState):
+        """
+        Returns a path (a list of actions) to the closest dot, starting from
+        gameState.
+        """
+        # Here are some useful elements of the startState
+        startPosition = gameState.getPacmanPosition()
+        food = gameState.getFood()
+        walls = gameState.getWalls()
+
+        # Method 1 works: Path found with cost 350 Time: 0.2 s
+        problem = AnyFoodSearchProblem(gameState)
+        result_path = search.breadthFirstSearch(problem)
+        return result_path
+
+        # Method 2 works: Path found with cost 369 Time: 0.2 s
+        # foodPointPositions = food.asList()
+        # distance, foodPoint = min([(util.manhattanDistance(startPosition, foodPoint), foodPoint) for foodPoint in foodPointPositions])
+        # prob = PositionSearchProblem(gameState, start=startPosition, goal=foodPoint, warn=False, visualize=False)
+        # result_path = search.breadthFirstSearch(prob)
+        # return result_path
+
+        # Method 3 works: Path found with cost 855 Time: 0.3 s
+        # foodPointPositions = food.asList()
+        # distance, foodPoint = min([(util.manhattanDistance(startPosition, foodPoint), foodPoint) for foodPoint in foodPointPositions])
+        # prob = PositionSearchProblem(gameState, start=startPosition, goal=foodPoint, warn=False, visualize=False)
+        # result_path = search.depthFirstSearch(prob)
+        # return result_path
+
+        # Method 4 works: Path found with cost 369 Time: 0.2 s
+        # foodPointPositions = food.asList()
+        # distance, foodPoint = min([(util.manhattanDistance(startPosition, foodPoint), foodPoint) for foodPoint in foodPointPositions])
+        # prob = PositionSearchProblem(gameState, start=startPosition, goal=foodPoint, warn=False, visualize=False)
+        # result_path = search.uniformCostSearch(prob)
+        # return result_path
+
+        # Method 5: works: Path found with cost 334 Time: 50 s
+        # foodPointPositions = food.asList()
+        # distance, path = min([mazeDistance(startPosition, foodPoint, gameState) for foodPoint in foodPointPositions])
+        # return path
